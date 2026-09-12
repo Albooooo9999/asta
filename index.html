@@ -219,12 +219,11 @@
       <div class="conta"><span id="l-conta">0</span><span class="su">/10</span></div>
       <ul class="rosa-elenco" id="l-elenco"></ul>
       <div class="campo">
-        <input type="text" id="in-calciatore" maxlength="24" placeholder="Chi chiami?" autocomplete="off" disabled>
-        <button id="btn-chiama" disabled>Chiama</button>
+        <input type="text" id="in-calciatore" maxlength="24" placeholder="Chi chiami?" autocomplete="off">
+        <button id="btn-chiama">Chiama</button>
       </div>
       <div class="piede">
         <button class="mini" id="btn-copia">Copia il link</button>
-        <button class="mini" id="btn-forza" hidden>Avvia comunque</button>
         <button class="mini" id="btn-esci">Esci</button>
         <button class="mini" id="btn-svuota">Svuota sala</button>
       </div>
@@ -424,7 +423,7 @@
    "in-codice","btn-entra-sala","btn-crea",
    "in-nome","btn-entra","n-nota",
    "l-codice","l-conta","l-elenco","in-calciatore","btn-chiama",
-   "btn-copia","btn-forza","btn-esci","btn-svuota","l-nota",
+   "btn-copia","btn-esci","btn-svuota","l-nota",
    "a-timer","a-barra","a-barra-i","a-avviso",
    "e-vincitore","e-dettaglio","e-aura","btn-nuova","e-campo","in-calciatore2","btn-chiama2","btn-sala"
   ].forEach(function (id) { el[id] = document.getElementById(id); });
@@ -432,7 +431,7 @@
   var mqtt = null, brokerIndice = 0, codice = "", base = "";
   var io = null, stato = null, presenze = {};
   var scadenza = 0, tickVisto = -1, fineInviata = -1, ultimoBip = -1;
-  var audio = null, blocco = null, sessioneCorrente = null, sbloccato = false, nuovaAperta = false;
+  var audio = null, blocco = null, sessioneCorrente = null, nuovaAperta = false;
 
   /* ---------- memoria locale ---------- */
   function leggi(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
@@ -645,13 +644,9 @@
           : '<li class="vuota"><span class="num">' + (i + 1) + "</span>libero</li>";
       }
       el["l-elenco"].innerHTML = righe;
-      var pieno = giocatori.length >= CAPIENZA || sbloccato;
-      el["in-calciatore"].disabled = !pieno;
-      el["btn-chiama"].disabled = !pieno;
-      el["btn-forza"].hidden = pieno;
-      el["l-nota"].textContent = pieno
+      el["l-nota"].textContent = giocatori.length >= CAPIENZA
         ? "Chiunque può chiamare: chi scrive per primo il nome fa partire l'asta per tutti."
-        : "Il campo si sblocca quando siete in dieci: ne mancano " + (CAPIENZA - giocatori.length) + ".";
+        : "Chiunque può chiamare, anche subito. Alla sala mancano " + (CAPIENZA - giocatori.length) + ".";
       mostra("sec-lobby");
       return;
     }
@@ -762,7 +757,6 @@
   el["in-calciatore"].addEventListener("keydown", function (e) { if (e.key === "Enter") chiama("in-calciatore"); });
   el["btn-chiama2"].addEventListener("click", function () { chiama("in-calciatore2"); });
   el["in-calciatore2"].addEventListener("keydown", function (e) { if (e.key === "Enter") chiama("in-calciatore2"); });
-  el["btn-forza"].addEventListener("click", function () { sbloccato = true; render(); });
   el["btn-sala"].addEventListener("click", tornaInSala);
   el["btn-nuova"].addEventListener("click", nuovaAsta);
   el["btn-esci"].addEventListener("click", esci);
