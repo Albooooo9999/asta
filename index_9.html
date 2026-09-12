@@ -1,0 +1,795 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Asta Fanta Aura</title>
+<meta name="description" content="Sala d'asta per il fantacalcio: timer condiviso, rilanci +1 +5 +10 e verdetto aura.">
+<meta name="theme-color" content="#F2CCBE">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="Asta Fanta">
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%231A120E'/%3E%3Ctext x='90' y='122' font-family='Helvetica,Arial' font-size='104' font-weight='bold' text-anchor='middle' fill='%23F2CCBE'%3EA%3C/text%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anton&family=Archivo:wght@400;500;600;700&display=swap">
+<style>
+  :root{
+    --rosa:#F2CCBE;
+    --rosa-scura:#E2AC99;
+    --carta:#FCE8E0;
+    --inchiostro:#1A120E;
+    --grigio:#8E7168;
+    --rosso:#C9161F;
+    --verde:#15683C;
+    --display:"Anton","Haettenschweiler","Arial Narrow",sans-serif;
+    --testo:"Archivo","Helvetica Neue",Arial,sans-serif;
+  }
+  *{box-sizing:border-box}
+  [hidden]{display:none!important}
+  html{-webkit-text-size-adjust:100%}
+  body{
+    margin:0;
+    background:var(--rosa);
+    color:var(--inchiostro);
+    font-family:var(--testo);
+    -webkit-font-smoothing:antialiased;
+    overscroll-behavior:none;
+  }
+  .wrap{
+    min-height:100svh;
+    padding:16px;
+    padding-block:max(12px,env(safe-area-inset-top)) max(24px,env(safe-area-inset-bottom));
+    display:flex;
+    flex-direction:column;
+    gap:16px;
+    max-width:820px;
+    margin:0 auto;
+  }
+  .testata{
+    display:flex;
+    align-items:flex-end;
+    justify-content:space-between;
+    gap:12px;
+    border-bottom:3px solid var(--inchiostro);
+    padding-bottom:6px;
+  }
+  .logo{
+    font-family:var(--display);
+    font-size:clamp(1.5rem,6vw,2.3rem);
+    line-height:.9;
+    text-transform:uppercase;
+    letter-spacing:.01em;
+  }
+  .logo em{font-style:normal;color:var(--rosso)}
+  .occhiello{
+    font-size:.64rem;
+    text-transform:uppercase;
+    letter-spacing:.16em;
+    color:var(--grigio);
+    font-weight:700;
+    text-align:right;
+    line-height:1.5;
+    white-space:nowrap;
+  }
+  .spia{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--rosso);margin-right:5px;vertical-align:baseline}
+  .spia.viva{background:var(--verde)}
+  .strip{
+    display:grid;
+    grid-template-columns:1.6fr 1fr 1.4fr;
+    border:3px solid var(--inchiostro);
+    background:var(--carta);
+  }
+  .strip > div{padding:7px 10px;border-right:1px solid var(--rosa-scura);min-width:0}
+  .strip > div:last-child{border-right:0}
+  .et{display:block;font-size:.58rem;text-transform:uppercase;letter-spacing:.15em;color:var(--grigio);font-weight:700}
+  .strip strong{
+    display:block;
+    font-family:var(--display);
+    font-weight:400;
+    font-size:clamp(1rem,4.4vw,1.6rem);
+    line-height:1.12;
+    text-transform:uppercase;
+    overflow-wrap:anywhere;
+  }
+  .strip .cifra{color:var(--rosso);font-variant-numeric:tabular-nums}
+  main{flex:1;display:flex;flex-direction:column;justify-content:center;gap:18px}
+  section{display:flex;flex-direction:column;gap:16px}
+  section[hidden]{display:none!important}
+  h2{
+    font-family:var(--display);
+    font-weight:400;
+    text-transform:uppercase;
+    font-size:clamp(1.35rem,5.2vw,2rem);
+    margin:0;line-height:1;text-wrap:balance;
+  }
+  p.nota{margin:0;color:var(--grigio);font-size:.88rem;line-height:1.5}
+  .campo{display:flex;gap:8px;flex-wrap:wrap}
+  input[type=text]{
+    flex:1 1 190px;min-width:0;
+    font-family:var(--display);font-weight:400;font-size:1.35rem;
+    text-transform:uppercase;padding:12px 14px;
+    border:3px solid var(--inchiostro);background:var(--carta);
+    color:var(--inchiostro);border-radius:0;
+  }
+  input[type=text]::placeholder{color:var(--rosa-scura)}
+  input[type=text]:focus-visible,button:focus-visible{outline:3px solid var(--rosso);outline-offset:3px}
+  button{
+    font-family:var(--display);font-weight:400;text-transform:uppercase;
+    font-size:1.35rem;padding:12px 22px;
+    border:3px solid var(--inchiostro);background:var(--inchiostro);
+    color:var(--carta);cursor:pointer;border-radius:0;
+    touch-action:manipulation;-webkit-user-select:none;user-select:none;
+  }
+  button.chiaro{background:var(--carta);color:var(--inchiostro)}
+  button:disabled{opacity:.26;cursor:not-allowed}
+  button.mini{
+    font-family:var(--testo);font-size:.7rem;font-weight:700;letter-spacing:.12em;
+    padding:7px 12px;background:transparent;color:var(--grigio);
+    border:1px solid var(--rosa-scura);
+  }
+  .conta{font-family:var(--display);font-size:clamp(2.8rem,15vw,5.5rem);line-height:.85;font-variant-numeric:tabular-nums}
+  .conta span.su{color:var(--grigio)}
+  .rosa-elenco{
+    list-style:none;margin:0;padding:0;
+    display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));
+    gap:1px;background:var(--rosa-scura);border:3px solid var(--inchiostro);
+  }
+  .rosa-elenco li{
+    background:var(--carta);padding:9px 11px;
+    display:flex;align-items:baseline;gap:9px;
+    font-weight:600;font-size:.94rem;min-height:42px;overflow-wrap:anywhere;
+  }
+  .rosa-elenco li.vuota{background:transparent;color:var(--grigio);font-weight:400}
+  .rosa-elenco .num{font-family:var(--display);font-size:.82rem;color:var(--grigio);font-variant-numeric:tabular-nums}
+  .rosa-elenco li.io{background:var(--inchiostro);color:var(--carta)}
+  .rosa-elenco li.io .num{color:var(--rosa-scura)}
+  .codice{
+    font-family:var(--display);font-size:clamp(2.6rem,17vw,5rem);
+    letter-spacing:.08em;line-height:.9;text-align:center;
+    border:3px solid var(--inchiostro);background:var(--carta);padding:12px 8px;
+  }
+  .timer{
+    font-family:var(--display);font-size:clamp(6.5rem,36vw,15rem);
+    line-height:.78;text-align:center;font-variant-numeric:tabular-nums;letter-spacing:-.02em;
+  }
+  .timer.caldo{color:var(--rosso)}
+  .barra{height:14px;border:3px solid var(--inchiostro);background:var(--carta);overflow:hidden}
+  .barra i{display:block;height:100%;background:var(--inchiostro);width:100%;transform-origin:left}
+  .barra.caldo i{background:var(--rosso)}
+  .rilanci{display:grid;grid-template-columns:repeat(3,1fr);gap:9px}
+  .rilanci button{font-size:clamp(1.5rem,8vw,2.5rem);padding:20px 4px}
+  .avviso{
+    text-align:center;font-weight:700;text-transform:uppercase;
+    letter-spacing:.13em;font-size:.72rem;color:var(--grigio);min-height:1.2em;
+  }
+  .esito{text-align:center;display:flex;flex-direction:column;gap:6px;align-items:center}
+  .esito .vincitore{
+    font-family:var(--display);font-size:clamp(2.4rem,14vw,5rem);
+    line-height:.85;text-transform:uppercase;overflow-wrap:anywhere;
+  }
+  .esito .preso{font-weight:700;font-size:.95rem;text-transform:uppercase;letter-spacing:.1em}
+  .aura{
+    font-family:var(--display);text-transform:uppercase;
+    font-size:clamp(1.7rem,8.5vw,3.2rem);line-height:.9;
+    padding:14px 18px;border:3px solid currentColor;margin-top:8px;
+  }
+  .aura.su{color:var(--verde)}
+  .aura.giu{color:var(--rosso)}
+  .piede{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+  @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="testata">
+    <div class="logo">Asta <em>Fanta</em></div>
+    <div class="occhiello" id="occhiello"><span class="spia" id="spia"></span><span id="stato-rete">collego…</span></div>
+  </header>
+
+  <div class="strip" id="strip" hidden>
+    <div><span class="et">Chiamata</span><strong id="s-calciatore">—</strong></div>
+    <div><span class="et">Offerta</span><strong class="cifra" id="s-cifra">1</strong></div>
+    <div><span class="et">In testa</span><strong id="s-leader">—</strong></div>
+  </div>
+
+  <main>
+    <section id="sec-sala">
+      <h2>Sala d'asta</h2>
+      <div class="campo">
+        <input type="text" id="in-codice" maxlength="5" placeholder="Codice" autocomplete="off" autocapitalize="characters" spellcheck="false">
+        <button id="btn-entra-sala">Entra</button>
+      </div>
+      <button class="chiaro" id="btn-crea">Crea una sala nuova</button>
+      <p class="nota">Chi crea la sala passa il codice agli altri nove, oppure gli manda direttamente il link: chi lo apre entra già nella sala giusta.</p>
+    </section>
+
+    <section id="sec-nome" hidden>
+      <h2>Come ti chiami?</h2>
+      <div class="campo">
+        <input type="text" id="in-nome" maxlength="14" placeholder="Il tuo nome" autocomplete="off">
+        <button id="btn-entra">Entra</button>
+      </div>
+      <p class="nota" id="n-nota">Dieci allenatori, una chiamata alla volta.</p>
+    </section>
+
+    <section id="sec-lobby" hidden>
+      <div class="codice" id="l-codice">—</div>
+      <div class="conta"><span id="l-conta">0</span><span class="su">/10</span></div>
+      <ul class="rosa-elenco" id="l-elenco"></ul>
+      <button id="btn-inizia" disabled>Inizia</button>
+      <div class="piede">
+        <button class="mini" id="btn-copia">Copia il link</button>
+        <button class="mini" id="btn-forza" hidden>Avvia comunque</button>
+        <button class="mini" id="btn-esci">Esci</button>
+        <button class="mini" id="btn-svuota">Svuota sala</button>
+      </div>
+      <p class="nota" id="l-nota">Il tasto si sblocca quando siete in dieci.</p>
+    </section>
+
+    <section id="sec-chiamata" hidden>
+      <h2 id="c-titolo">Chi chiami?</h2>
+      <div class="campo" id="c-campo">
+        <input type="text" id="in-calciatore" maxlength="24" placeholder="Nome del calciatore" autocomplete="off">
+        <button id="btn-banditore">Metti all'asta</button>
+      </div>
+      <p class="nota" id="c-nota">Parte da 1 credito, il primo giro dura 10 secondi.</p>
+    </section>
+
+    <section id="sec-asta" hidden>
+      <div class="timer" id="a-timer">10</div>
+      <div class="barra" id="a-barra"><i id="a-barra-i"></i></div>
+      <div class="rilanci">
+        <button class="chiaro" data-rilancio="1">+1</button>
+        <button class="chiaro" data-rilancio="5">+5</button>
+        <button class="chiaro" data-rilancio="10">+10</button>
+      </div>
+      <div class="avviso" id="a-avviso"></div>
+    </section>
+
+    <section id="sec-esito" hidden>
+      <div class="esito">
+        <span class="preso">Aggiudicato</span>
+        <div class="vincitore" id="e-vincitore">—</div>
+        <span class="preso" id="e-dettaglio">—</span>
+        <div class="aura" id="e-aura">—</div>
+      </div>
+      <button id="btn-nuova">Nuova asta</button>
+    </section>
+  </main>
+</div>
+
+<script>
+/* ============ client MQTT 3.1.1 minimale su WebSocket (solo QoS 0) ============ */
+(function (globale) {
+  "use strict";
+  var CODIFICA = new TextEncoder();
+  var DECODIFICA = new TextDecoder();
+
+  function lunghezzaVariabile(n) {
+    var out = [];
+    do { var b = n % 128; n = Math.floor(n / 128); if (n > 0) b = b | 128; out.push(b); } while (n > 0);
+    return out;
+  }
+  function stringa(s) {
+    var b = CODIFICA.encode(s);
+    return [b.length >> 8, b.length & 255].concat(Array.prototype.slice.call(b));
+  }
+  function pacchetto(tipo, flag, corpo) {
+    return new Uint8Array([(tipo << 4) | flag].concat(lunghezzaVariabile(corpo.length), corpo));
+  }
+
+  function creaMqtt(opz) {
+    var url = opz.url;
+    var clientId = opz.clientId || "mm" + Math.random().toString(16).slice(2, 10);
+    var keepalive = opz.keepalive || 45;
+    var FabbricaWS = opz.WebSocket || globale.WebSocket;
+    var ws = null, buffer = new Uint8Array(0), idPacchetto = 1;
+    var pingTimer = null, riconnessione = null, tentativi = 0;
+    var chiuso = false, connesso = false, iscrizioni = [], coda = [];
+
+    function avvisa(s) { if (opz.onStato) try { opz.onStato(s); } catch (e) {} }
+    function invia(dati) {
+      if (!ws || ws.readyState !== 1) return false;
+      try { ws.send(dati); return true; } catch (e) { return false; }
+    }
+    function apri() {
+      if (chiuso) return;
+      avvisa("connessione");
+      try { ws = new FabbricaWS(url, "mqtt"); } catch (e) { programmaRiconnessione(); return; }
+      ws.binaryType = "arraybuffer";
+      ws.onopen = function () {
+        buffer = new Uint8Array(0);
+        var flag = 0x02;
+        var corpo = stringa("MQTT").concat([4]);
+        var payloadWill = [];
+        if (opz.will) {
+          flag |= 0x04;
+          if (opz.will.retain) flag |= 0x20;
+          var mw = CODIFICA.encode(opz.will.payload || "");
+          payloadWill = stringa(opz.will.topic).concat([mw.length >> 8, mw.length & 255],
+            Array.prototype.slice.call(mw));
+        }
+        corpo = corpo.concat([flag, keepalive >> 8, keepalive & 255]);
+        corpo = corpo.concat(stringa(clientId), payloadWill);
+        invia(pacchetto(1, 0, corpo));
+      };
+      ws.onmessage = function (ev) {
+        var dati = ev.data, arr;
+        if (dati instanceof ArrayBuffer) arr = new Uint8Array(dati);
+        else if (dati && dati.byteLength !== undefined) arr = new Uint8Array(dati);
+        else return;
+        var unito = new Uint8Array(buffer.length + arr.length);
+        unito.set(buffer, 0); unito.set(arr, buffer.length);
+        buffer = unito;
+        smaltisci();
+      };
+      ws.onclose = function () { connesso = false; fermaPing(); avvisa("caduta"); programmaRiconnessione(); };
+      ws.onerror = function () { try { ws.close(); } catch (e) {} };
+    }
+    function smaltisci() {
+      while (buffer.length >= 2) {
+        var moltiplicatore = 1, lunghezza = 0, i = 1, b;
+        do {
+          if (i >= buffer.length) return;
+          b = buffer[i]; lunghezza += (b & 127) * moltiplicatore; moltiplicatore *= 128; i++;
+        } while ((b & 128) !== 0 && i < 5);
+        var totale = i + lunghezza;
+        if (buffer.length < totale) return;
+        gestisci(buffer[0] >> 4, buffer[0] & 15, buffer.subarray(i, totale));
+        buffer = buffer.subarray(totale);
+      }
+    }
+    function gestisci(tipo, flag, corpo) {
+      if (tipo === 2) {
+        if (corpo.length >= 2 && corpo[1] !== 0) { avvisa("rifiutato"); try { ws.close(); } catch (e) {} return; }
+        connesso = true; tentativi = 0; avvisa("connesso");
+        iscrizioni.forEach(inviaIscrizione);
+        coda.splice(0, coda.length).forEach(function (m) { pubblica(m.topic, m.payload, m.retain); });
+        avviaPing();
+        if (opz.onPronto) try { opz.onPronto(); } catch (e) {}
+        return;
+      }
+      if (tipo === 3) {
+        var qos = (flag >> 1) & 3;
+        var lt = (corpo[0] << 8) | corpo[1];
+        var topic = DECODIFICA.decode(corpo.subarray(2, 2 + lt));
+        var p = 2 + lt; if (qos > 0) p += 2;
+        var testo = DECODIFICA.decode(corpo.subarray(p));
+        if (opz.onMessaggio) try { opz.onMessaggio(topic, testo, (flag & 1) === 1); } catch (e) {}
+      }
+    }
+    function inviaIscrizione(filtro) {
+      var id = idPacchetto++; if (idPacchetto > 65000) idPacchetto = 1;
+      invia(pacchetto(8, 2, [id >> 8, id & 255].concat(stringa(filtro), [0])));
+    }
+    function avviaPing() {
+      fermaPing();
+      pingTimer = setInterval(function () { invia(new Uint8Array([192, 0])); }, Math.max(10000, keepalive * 700));
+    }
+    function fermaPing() { if (pingTimer) { clearInterval(pingTimer); pingTimer = null; } }
+    function programmaRiconnessione() {
+      if (chiuso || riconnessione) return;
+      tentativi++;
+      riconnessione = setTimeout(function () { riconnessione = null; apri(); }, Math.min(8000, 600 * tentativi));
+    }
+    function iscriviti(filtro) {
+      if (iscrizioni.indexOf(filtro) === -1) iscrizioni.push(filtro);
+      if (connesso) inviaIscrizione(filtro);
+    }
+    function pubblica(topic, payload, retain) {
+      if (!connesso) {
+        coda = coda.filter(function (m) { return m.topic !== topic; });
+        coda.push({ topic: topic, payload: payload, retain: retain });
+        if (coda.length > 20) coda.shift();
+        return false;
+      }
+      var m = CODIFICA.encode(payload == null ? "" : String(payload));
+      return invia(pacchetto(3, retain ? 1 : 0, stringa(topic).concat(Array.prototype.slice.call(m))));
+    }
+    function chiudi() {
+      chiuso = true; fermaPing();
+      if (riconnessione) { clearTimeout(riconnessione); riconnessione = null; }
+      try { invia(new Uint8Array([224, 0])); ws.close(); } catch (e) {}
+    }
+    apri();
+    return { iscriviti: iscriviti, pubblica: pubblica, chiudi: chiudi,
+             get connesso() { return connesso; }, clientId: clientId };
+  }
+  globale.creaMqtt = creaMqtt;
+})(window);
+
+/* ============================== l'asta ============================== */
+(function () {
+  "use strict";
+
+  var CAPIENZA = 10;
+  var PRIMO_GIRO = 10000;
+  var GIRO = 7000;
+  var PREFISSO = "astafanta7";
+  var SCADENZA_PRESENZA = 95000;
+  var BROKER = [
+    "wss://broker.emqx.io:8084/mqtt",
+    "wss://broker.hivemq.com:8884/mqtt",
+    "wss://test.mosquitto.org:8081/"
+  ];
+  var brokerScelto = new URLSearchParams(location.search).get("broker");
+  if (brokerScelto) BROKER = [brokerScelto];
+
+  var el = {};
+  ["sec-sala","sec-nome","sec-lobby","sec-chiamata","sec-asta","sec-esito",
+   "strip","s-calciatore","s-cifra","s-leader","spia","stato-rete",
+   "in-codice","btn-entra-sala","btn-crea",
+   "in-nome","btn-entra","n-nota",
+   "l-codice","l-conta","l-elenco","btn-inizia","btn-copia","btn-forza","btn-esci","btn-svuota","l-nota",
+   "c-titolo","c-campo","c-nota","in-calciatore","btn-banditore",
+   "a-timer","a-barra","a-barra-i","a-avviso",
+   "e-vincitore","e-dettaglio","e-aura","btn-nuova"
+  ].forEach(function (id) { el[id] = document.getElementById(id); });
+
+  var mqtt = null, brokerIndice = 0, codice = "", base = "";
+  var io = null, stato = null, presenze = {};
+  var scadenza = 0, tickVisto = -1, fineInviata = -1, ultimoBip = -1;
+  var audio = null, blocco = null, sessioneCorrente = null;
+
+  /* ---------- memoria locale ---------- */
+  function leggi(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function scrivi(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+
+  var mioId = leggi("af-id");
+  if (!mioId) { mioId = "g" + Math.random().toString(36).slice(2, 9); scrivi("af-id", mioId); }
+
+  /* ---------- utilita' ---------- */
+  function mostra(sezione) {
+    ["sec-sala","sec-nome","sec-lobby","sec-chiamata","sec-asta","sec-esito"]
+      .forEach(function (s) { el[s].hidden = (s !== sezione); });
+  }
+  function pulisci(s, max) { return String(s || "").replace(/\s+/g, " ").trim().slice(0, max || 24); }
+  function normalizzaCodice(s) { return String(s || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 5); }
+  function codiceNuovo() {
+    var alfabeto = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789", out = "";
+    for (var i = 0; i < 5; i++) out += alfabeto[Math.floor(Math.random() * alfabeto.length)];
+    return out;
+  }
+  function impronta(s) {
+    var h = 2166136261;
+    for (var i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return h >>> 0;
+  }
+  function sorteggio(seme) { return impronta(seme) % 2 === 0 ? "su" : "giu"; }
+  function fuga(s) {
+    return String(s).replace(/[&<>"']/g, function (c) {
+      return ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c];
+    });
+  }
+  function bip(acuto) {
+    try {
+      if (!audio) audio = new (window.AudioContext || window.webkitAudioContext)();
+      if (audio.state === "suspended") audio.resume();
+      var o = audio.createOscillator(), g = audio.createGain();
+      o.type = "square";
+      o.frequency.value = acuto ? 880 : 440;
+      g.gain.value = 0.05;
+      o.connect(g); g.connect(audio.destination);
+      o.start();
+      g.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + 0.16);
+      o.stop(audio.currentTime + 0.18);
+    } catch (e) {}
+  }
+  function tieniAcceso(attivo) {
+    try {
+      if (attivo && !blocco && navigator.wakeLock) {
+        navigator.wakeLock.request("screen").then(function (b) { blocco = b; }).catch(function () {});
+      } else if (!attivo && blocco) { blocco.release().catch(function () {}); blocco = null; }
+    } catch (e) {}
+  }
+
+  /* ---------- stato condiviso ---------- */
+  function statoIniziale() {
+    return { fase: "lobby", turno: 0, tick: 0, calciatore: "", banditoreId: "", banditoreNome: "",
+             cifra: 1, leaderId: "", leaderNome: "", durata: PRIMO_GIRO, esito: "" };
+  }
+  function salva(nuovo) {
+    stato = nuovo;
+    if (mqtt) mqtt.pubblica(base + "/stato", JSON.stringify(nuovo), true);
+    applicaStato();
+  }
+  function elencoGiocatori() {
+    var adesso = Date.now(), fuori = [];
+    Object.keys(presenze).forEach(function (id) {
+      var p = presenze[id];
+      if (!p || !p.nome || adesso - (p.visto || 0) > SCADENZA_PRESENZA) fuori.push(id);
+    });
+    fuori.forEach(function (id) { delete presenze[id]; });
+    return Object.keys(presenze).map(function (id) {
+      return { id: id, nome: presenze[id].nome, ts: presenze[id].ts || 0 };
+    }).sort(function (a, b) { return a.ts - b.ts || (a.id < b.id ? -1 : 1); });
+  }
+
+  /* ---------- connessione ---------- */
+  function collega(codiceSala) {
+    codice = codiceSala;
+    base = PREFISSO + "/" + codice;
+    if (mqtt) { try { mqtt.chiudi(); } catch (e) {} mqtt = null; }
+    brokerIndice = impronta(codice) % BROKER.length;
+    apriBroker();
+  }
+  function apriBroker() {
+    var url = BROKER[brokerIndice % BROKER.length];
+    var sessione = { viva: true, haFunzionato: false, cliente: null };
+    sessioneCorrente = sessione;
+    var scadutoIlTempo = setTimeout(function () {
+      if (sessione.viva && !sessione.haFunzionato) cambiaBroker(sessione);
+    }, 9000);
+
+    sessione.cliente = window.creaMqtt({
+      url: url,
+      clientId: "af" + mioId + Math.random().toString(16).slice(2, 6),
+      will: { topic: base + "/p/" + mioId, payload: "", retain: true },
+      onStato: function (s) {
+        if (sessione !== sessioneCorrente) return;
+        el["spia"].classList.toggle("viva", s === "connesso");
+        el["stato-rete"].textContent = s === "connesso" ? ("sala " + codice)
+          : (s === "connessione" ? "collego…" : "riconnetto…");
+        if (s === "connesso") { sessione.haFunzionato = true; clearTimeout(scadutoIlTempo); }
+        if ((s === "caduta" || s === "rifiutato") && !sessione.haFunzionato) cambiaBroker(sessione);
+      },
+      onPronto: function () {
+        sessione.cliente.iscriviti(base + "/#");
+        if (io) annunciati();
+      },
+      onMessaggio: function (t, p) { if (sessione === sessioneCorrente) ricevi(t, p); }
+    });
+    mqtt = sessione.cliente;
+  }
+  function cambiaBroker(sessione) {
+    if (!sessione.viva) return;
+    sessione.viva = false;
+    try { sessione.cliente.chiudi(); } catch (e) {}
+    brokerIndice++;
+    setTimeout(apriBroker, 400);
+  }
+  function ricevi(topic, testo) {
+    if (topic === base + "/stato") {
+      if (!testo) { stato = null; applicaStato(); return; }
+      try { stato = JSON.parse(testo); } catch (e) { return; }
+      applicaStato();
+      return;
+    }
+    var pezzi = topic.split("/");
+    if (pezzi.length === 4 && pezzi[2] === "p") {
+      var id = pezzi[3];
+      if (!testo) { delete presenze[id]; }
+      else {
+        try {
+          var d = JSON.parse(testo);
+          presenze[id] = { nome: pulisci(d.nome, 14), ts: d.ts || Date.now(), visto: Date.now() };
+        } catch (e) {}
+      }
+      render();
+    }
+  }
+  function annunciati() {
+    if (!io || !mqtt) return;
+    presenze[mioId] = { nome: io.nome, ts: io.ts, visto: Date.now() };
+    mqtt.pubblica(base + "/p/" + mioId, JSON.stringify({ nome: io.nome, ts: io.ts }), true);
+  }
+  setInterval(function () { if (io) annunciati(); }, 25000);
+  setInterval(function () { if (io && stato && stato.fase === "lobby") render(); }, 6000);
+
+  /* ---------- timer condiviso ---------- */
+  function applicaStato() {
+    if (stato && stato.fase === "asta" && stato.tick !== tickVisto) {
+      tickVisto = stato.tick;
+      scadenza = Date.now() + (stato.durata || GIRO);
+      fineInviata = -1; ultimoBip = -1;
+      document.querySelectorAll("[data-rilancio]").forEach(function (b) { b.disabled = false; });
+    }
+    if (!stato || stato.fase !== "asta") tickVisto = -1;
+    tieniAcceso(!!stato && (stato.fase === "asta" || stato.fase === "nome"));
+    render();
+  }
+
+  function ciclo() {
+    if (stato && stato.fase === "asta") {
+      var resta = Math.max(0, scadenza - Date.now());
+      var sec = Math.ceil(resta / 1000);
+      el["a-timer"].textContent = sec;
+      var quota = stato.durata ? resta / stato.durata : 0;
+      el["a-barra-i"].style.transform = "scaleX(" + Math.max(0, Math.min(1, quota)) + ")";
+      var caldo = resta <= 3000;
+      el["a-timer"].classList.toggle("caldo", caldo);
+      el["a-barra"].classList.toggle("caldo", caldo);
+      if (caldo && sec > 0 && sec !== ultimoBip) { ultimoBip = sec; bip(false); }
+      if (resta <= 0 && fineInviata !== stato.tick) {
+        fineInviata = stato.tick;
+        bip(true);
+        var seme = stato.turno + "-" + stato.tick + "-" + stato.leaderId + "-" + stato.cifra;
+        var copia = Object.assign({}, stato, { fase: "esito", esito: sorteggio(seme) });
+        salva(copia);
+      }
+    }
+    requestAnimationFrame(ciclo);
+  }
+  requestAnimationFrame(ciclo);
+
+  /* ---------- render ---------- */
+  function render() {
+    if (!codice) { mostra("sec-sala"); el["strip"].hidden = true; return; }
+    if (!io) { mostra("sec-nome"); el["strip"].hidden = true; return; }
+    if (!stato) { stato = statoIniziale(); }
+
+    var giocatori = elencoGiocatori();
+    var fase = stato.fase;
+
+    var stripVisibile = (fase === "asta" || fase === "esito" || fase === "nome");
+    el["strip"].hidden = !stripVisibile;
+    if (stripVisibile) {
+      el["s-calciatore"].textContent = stato.calciatore || "…";
+      el["s-cifra"].textContent = fase === "nome" ? 1 : stato.cifra;
+      el["s-leader"].textContent = fase === "nome" ? (stato.banditoreNome || "—") : (stato.leaderNome || "—");
+    }
+
+    if (fase === "lobby") {
+      el["l-codice"].textContent = codice;
+      el["l-conta"].textContent = giocatori.length;
+      var righe = "";
+      for (var i = 0; i < Math.max(CAPIENZA, giocatori.length); i++) {
+        var g = giocatori[i];
+        righe += g
+          ? '<li class="' + (g.id === mioId ? "io" : "") + '"><span class="num">' + (i + 1) + "</span>" + fuga(g.nome) + "</li>"
+          : '<li class="vuota"><span class="num">' + (i + 1) + "</span>libero</li>";
+      }
+      el["l-elenco"].innerHTML = righe;
+      var pieno = giocatori.length >= CAPIENZA;
+      el["btn-inizia"].disabled = !pieno;
+      el["btn-forza"].hidden = pieno;
+      el["l-nota"].textContent = pieno
+        ? "Siete al completo. Chi schiaccia Inizia fa la chiamata e resta fuori dai rilanci."
+        : "Il tasto si sblocca quando siete in dieci: ne mancano " + (CAPIENZA - giocatori.length) + ".";
+      mostra("sec-lobby");
+      return;
+    }
+
+    if (fase === "nome") {
+      var sonoIo = stato.banditoreId === mioId;
+      el["c-titolo"].textContent = sonoIo ? "Chi chiami?" : (stato.banditoreNome + " sta chiamando…");
+      el["c-campo"].hidden = !sonoIo;
+      el["c-nota"].textContent = sonoIo
+        ? "Parte da 1 credito, il primo giro dura 10 secondi."
+        : "Tieni le dita pronte.";
+      mostra("sec-chiamata");
+      if (sonoIo && document.activeElement !== el["in-calciatore"]) {
+        setTimeout(function () { try { el["in-calciatore"].focus(); } catch (e) {} }, 40);
+      }
+      return;
+    }
+
+    if (fase === "asta") {
+      var bloccato = mioId === stato.banditoreId || mioId === stato.leaderId;
+      document.querySelectorAll("[data-rilancio]").forEach(function (b) { b.disabled = bloccato; });
+      el["a-avviso"].textContent = mioId === stato.banditoreId
+        ? "Hai chiamato tu: guarda e basta."
+        : (mioId === stato.leaderId ? "Sei in testa, aspetta un rilancio." : "");
+      mostra("sec-asta");
+      return;
+    }
+
+    if (fase === "esito") {
+      var su = stato.esito === "su";
+      el["e-vincitore"].textContent = stato.leaderNome || "—";
+      el["e-dettaglio"].textContent = (stato.calciatore || "—") + " · " + stato.cifra + " crediti";
+      el["e-aura"].textContent = su ? "Hai guadagnato aura" : "Hai perso aura";
+      el["e-aura"].className = "aura " + (su ? "su" : "giu");
+      mostra("sec-esito");
+    }
+  }
+
+  /* ---------- azioni ---------- */
+  function entraSala(c) {
+    c = normalizzaCodice(c);
+    if (c.length < 3) { el["in-codice"].focus(); return; }
+    scrivi("af-sala", c);
+    try { history.replaceState(null, "", "#" + c); } catch (e) {}
+    collega(c);
+    var nome = leggi("af-nome");
+    if (nome) { io = { nome: nome, ts: Date.now() }; annunciati(); }
+    render();
+  }
+  function entra() {
+    var nome = pulisci(el["in-nome"].value, 14);
+    if (!nome) return;
+    scrivi("af-nome", nome);
+    io = { nome: nome, ts: Date.now() };
+    annunciati();
+    bip(true);
+    render();
+  }
+  function avvia() {
+    if (!io) return;
+    salva(Object.assign({}, stato || statoIniziale(), {
+      fase: "nome", calciatore: "", banditoreId: mioId, banditoreNome: io.nome,
+      cifra: 1, leaderId: mioId, leaderNome: io.nome, esito: ""
+    }));
+  }
+  function metteAllAsta() {
+    var nome = pulisci(el["in-calciatore"].value, 24);
+    if (!nome || !stato) return;
+    el["in-calciatore"].value = "";
+    try { el["in-calciatore"].blur(); } catch (e) {}
+    bip(true);
+    salva(Object.assign({}, stato, {
+      fase: "asta", calciatore: nome, turno: (stato.turno || 0) + 1, tick: 1,
+      cifra: 1, durata: PRIMO_GIRO, esito: ""
+    }));
+  }
+  function rilancia(passo) {
+    if (!stato || stato.fase !== "asta" || !io) return;
+    if (mioId === stato.banditoreId || mioId === stato.leaderId) return;
+    bip(false);
+    salva(Object.assign({}, stato, {
+      cifra: stato.cifra + passo, leaderId: mioId, leaderNome: io.nome,
+      tick: (stato.tick || 0) + 1, durata: GIRO
+    }));
+  }
+  function nuovaAsta() { salva(Object.assign({}, statoIniziale(), { turno: (stato && stato.turno) || 0 })); }
+  function esci() {
+    if (mqtt) mqtt.pubblica(base + "/p/" + mioId, "", true);
+    delete presenze[mioId];
+    io = null;
+    try { localStorage.removeItem("af-nome"); } catch (e) {}
+    render();
+  }
+  function svuota() {
+    if (!mqtt) return;
+    Object.keys(presenze).forEach(function (id) { mqtt.pubblica(base + "/p/" + id, "", true); });
+    presenze = {};
+    io = null;
+    try { localStorage.removeItem("af-nome"); } catch (e) {}
+    salva(statoIniziale());
+  }
+  function copiaLink() {
+    var link = location.origin + location.pathname + "#" + codice;
+    var fatto = function () { el["btn-copia"].textContent = "Link copiato"; setTimeout(function () { el["btn-copia"].textContent = "Copia il link"; }, 1800); };
+    if (navigator.share) { navigator.share({ title: "Asta Fanta", text: "Entra nella sala " + codice, url: link }).then(fatto).catch(function () {}); return; }
+    if (navigator.clipboard) { navigator.clipboard.writeText(link).then(fatto).catch(function () {}); return; }
+    prompt("Copia il link:", link);
+  }
+
+  /* ---------- eventi ---------- */
+  el["btn-entra-sala"].addEventListener("click", function () { entraSala(el["in-codice"].value); });
+  el["in-codice"].addEventListener("keydown", function (e) { if (e.key === "Enter") entraSala(el["in-codice"].value); });
+  el["btn-crea"].addEventListener("click", function () { entraSala(codiceNuovo()); });
+  el["btn-entra"].addEventListener("click", entra);
+  el["in-nome"].addEventListener("keydown", function (e) { if (e.key === "Enter") entra(); });
+  el["btn-inizia"].addEventListener("click", avvia);
+  el["btn-forza"].addEventListener("click", avvia);
+  el["btn-banditore"].addEventListener("click", metteAllAsta);
+  el["in-calciatore"].addEventListener("keydown", function (e) { if (e.key === "Enter") metteAllAsta(); });
+  el["btn-nuova"].addEventListener("click", nuovaAsta);
+  el["btn-esci"].addEventListener("click", esci);
+  el["btn-svuota"].addEventListener("click", svuota);
+  el["btn-copia"].addEventListener("click", copiaLink);
+  document.querySelectorAll("[data-rilancio]").forEach(function (b) {
+    b.addEventListener("click", function () {
+      b.disabled = true;
+      rilancia(parseInt(b.getAttribute("data-rilancio"), 10));
+    });
+  });
+  document.addEventListener("visibilitychange", function () {
+    if (!document.hidden) { if (io) annunciati(); render(); }
+  });
+
+  /* ---------- avvio ---------- */
+  var nomeSalvato = leggi("af-nome");
+  if (nomeSalvato) el["in-nome"].value = nomeSalvato;
+  var dallUrl = normalizzaCodice(location.hash.replace("#", ""));
+  var salaSalvata = normalizzaCodice(leggi("af-sala"));
+  if (dallUrl.length >= 3) entraSala(dallUrl);
+  else if (salaSalvata.length >= 3) { el["in-codice"].value = salaSalvata; render(); }
+  else render();
+})();
+</script>
+</body>
+</html>
